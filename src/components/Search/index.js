@@ -12,7 +12,7 @@ export default class Search extends React.Component{
         const { onLocationSelected } = this.props
         return (
             <GooglePlacesAutocomplete 
-                placeholder="search.."
+                placeholder="Where to?"
                 onPress={(data, details) => {
                     console.log(data, details)
                     onLocationSelected(data, details)
@@ -45,7 +45,7 @@ export default class Search extends React.Component{
                         borderBottomWidth: 0,
                     },
                     textInput: {
-                        height: 40,
+                        height: 54,
                         margin: 0,
                         borderRadius: 0,
                         paddingTop: 0,
