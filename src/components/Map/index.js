@@ -1,27 +1,37 @@
 import React, { Fragment } from 'react';
-import { View, Text } from 'react-native';
+import { View, Image } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import Search from '../Search'
 import Directions from '../Directions';
-import { LocationBox, LocationText, LocationTimeTextSmall, LocationTimeBox, LocationTimeText } from './style'
+import { LocationBox, LocationText, LocationTimeTextSmall, LocationTimeBox, LocationTimeText, Back } from './style'
 import { getPixelSize } from '../../utils';
 import markerImage from '../../assets/marker.png'
+import Geocoder from 'react-native-geocoding';
+import Details from '../Details/index'
+import backImage from '../../assets/back.png'
 
+Geocoder.init("AIzaSyAjj9PUjUFnTj_ZTwr_2eYLllO86-qoNSA");
 export default class Map extends React.Component {
   state = {
     region: null,
     destination: null,
+    duration: null,
+    location: null,
   }
 
   async componentDidMount() {
     navigator.geolocation.getCurrentPosition(
-      ({coords: {latitude, longitude}}) => {
+      async ({coords: {latitude, longitude}}) => {
+        const response = await Geocoder.from({latitude, longitude})
+        const address = response.results[0].formatted_address;
+        const location = address.substring(0, address.indexOf(','))
         this.setState({
+          location,
           region: {
             latitude: latitude,
             longitude: longitude,
-            longitudeDelta: 0.0064,
-            latitudeDelta: 0.0054,
+            longitudeDelta: 0.0054,
+            latitudeDelta: 0.0044,
           }
         })
       }, //success
@@ -34,6 +44,12 @@ export default class Map extends React.Component {
       }
     )
   }
+
+  handleBack = () => {
+    this.setState({
+      destination: null
+    })
+  };
 
   handleLocationSelected= (data, details) => {
     console.log(data, 'manu')
@@ -49,7 +65,7 @@ export default class Map extends React.Component {
   }
 
   render() {
-    const { region, destination } = this.state;
+    const { region, destination, duration, location } = this.state;
     return (
       <View style={{flex: 1}}>
         <MapView
@@ -65,12 +81,16 @@ export default class Map extends React.Component {
               origin ={region}
               destination={destination}
                 onReady={result => {
+                  console.log(result, "manu")
+                  this.setState({
+                    duration: Math.floor(result.duration)
+                  })
                   this.mapView.fitToCoordinates(result.coordinates, {
                     edgePadding: {
                       right: getPixelSize(60),
                       left: getPixelSize(60),
                       top: getPixelSize(60),
-                      bottom: getPixelSize(60)
+                      bottom: getPixelSize(330)
                     }
                   })
                 }}
@@ -95,21 +115,26 @@ export default class Map extends React.Component {
               <LocationBox>
                 <LocationTimeBox>
                   <LocationTimeText>
-                    31
+                    {duration}
                   </LocationTimeText>
                   <LocationTimeTextSmall>MIN</LocationTimeTextSmall>
                 </LocationTimeBox>
                   <LocationText>
-                    Nirmal Corner
+                    {location}
                   </LocationText>
               </LocationBox>
             </Marker>
             </Fragment>
           )}
         </MapView>
-        <Search 
-          onLocationSelected={this.handleLocationSelected}
-        />
+        { destination ? (
+            <Fragment>
+              <Back onPress={this.handleBack}>
+                <Image source={backImage} />
+              </Back>
+              <Details />
+            </Fragment>
+          ) : <Search onLocationSelected={this.handleLocationSelected}/>}
       </View>
     )
   }
